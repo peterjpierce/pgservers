@@ -1,0 +1,22 @@
+---
+description: Perform start/stop/etc. operations for PostgreSQL servers
+custom_args:
+
+  - args: ['operation']
+    kwargs:
+      nargs: '1'
+      metavar: operation
+      choices:
+        - start
+        - stop
+        - status
+        - restart
+        - reload
+        - promote
+      help: issue pg_ctl command
+
+  - args: ['instances']
+    kwargs:
+      nargs: '+'
+      metavar: instances
+      help: 'instances for operate on, or "all"'

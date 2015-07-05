@@ -1,0 +1,5 @@
+var/
+.idea/
+.DS_Store
+*.swp
+*.py[cod]
