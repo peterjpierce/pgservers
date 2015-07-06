@@ -1,27 +1,35 @@
 import logging
+from os.path import basename, dirname
 
-from pgs.common import errors, context, servers
+from pgs.common import context, pgservers
+
+TOOLNAME = basename(dirname(__file__))
 
 
 def run():
 
-    args, instance_map = context.setup()
+    args, instance_map = context.setup(TOOLNAME)
     log = logging.getLogger(__name__)
 
-    log.debug('received task "%s" for instances %s' % (args.task, args.instances))
+    log.debug('received task "%s" for instances %s' % (args.operation, args.instances))
+    servers = pgservers.Servers(instance_map)
     instances = instance_map.keys() if 'all' in args.instances else set(args.instances)
+    invalid_instances = [i for i in instances if i not in servers.instance_names]
 
-    for instance in sorted(instances):
+    if invalid_instances:
+        log.error('invalid instance(s): %s' % str(invalid_instances))
 
-        try:
-            server = servers.GunicornServer(instance, instance_map)
-        except errors.InvalidServerError as err:
-            log.warn('instance "%s" is not valid, skipping' % instance)
-            continue
+    elif args.operation == 'list':
+        print('\n'.join(servers.instance_names))
 
-        log.info('performing %s for %s' % (args.task, server.name))
-        meth = getattr(server, args.task)
-        meth()
+    else:
+
+        for instance in sorted(instances):
+            server = servers.get_instance(instance)
+
+            log.info('performing %s for %s' % (args.operation, server.name))
+            method = getattr(server, args.operation)
+            method()
 
 
 if __name__ == '__main__':

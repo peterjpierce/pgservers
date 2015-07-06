@@ -4,7 +4,7 @@ custom_args:
 
   - args: ['operation']
     kwargs:
-      nargs: '1'
+      nargs: 1
       metavar: operation
       choices:
         - start
@@ -13,10 +13,11 @@ custom_args:
         - restart
         - reload
         - promote
+        - list
       help: issue pg_ctl command
 
   - args: ['instances']
     kwargs:
-      nargs: '+'
+      nargs: '*'
       metavar: instances
       help: 'instances for operate on, or "all"'

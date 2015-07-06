@@ -11,6 +11,7 @@ log = logging.getLogger(__name__)
 PAUSE_SECONDS = 5
 MAX_TRIES = 10
 
+
 class Servers:
     """Constellation of servers as defined in the instance map."""
 
@@ -18,6 +19,11 @@ class Servers:
         self.instance_map = instance_map
         self.servers = self._build_server_set(instance_map)
         self._cursor = 0
+
+    @property
+    def instance_names(self):
+        """Get sorted list of instance names."""
+        return sorted([s.name for s in self.servers])
 
     def get_instance(self, instance_name):
         """Retrieve a named instance from the set."""
@@ -72,20 +78,8 @@ class PGServer:
             log.info('%s is already running' % self.name)
 
         else:
-            os_args = [
-                os.path.join(self.cfg['pgbinaries'], 'bin', 'pg_ctl'),
-                'start',
-            ]
-            server_options = {
-                'pgdata': self.cfg['pgdata'],
-                'log': self.cfg['log'],
-            }
-            for arg, val in server_options.items():
-                os_args.append('--%s=%s' % (arg, val))
-
-            log.info('starting %s' % self.name)
-            log.debug('args are: %s' % str(os_args))
-            self.process = psutil.Popen(os_args)
+            named_args = {x: self.cfg[x] for x in ['pgdata', 'log']}
+            self.process = self._pg_ctl('start', **named_args)
 
             if not self.running:
                 log.error('server %s did not start' % self.name)
@@ -95,14 +89,15 @@ class PGServer:
     def stop(self):
         """Stop an instance."""
         if self.running:
-            cnt = 0
+            count = 0
             identifier = '%s (%d)' % (self.name, self.process.pid)
-            while cnt < MAX_TRIES and self.running:
-                msg = '%s not stopped yet, retrying' if cnt else 'stopping %s'
+
+            while count < MAX_TRIES and self.running:
+                msg = '%s not stopped yet, retrying' if count else 'stopping %s'
                 log.info(msg % identifier)
-                self.process.terminate()
+                self.process = self._pg_ctl('stop')
                 time.sleep(PAUSE_SECONDS)
-                cnt += 1
+                count += 1
 
             if self.running:
                 err = 'server %s did not stop' % identifier
@@ -119,17 +114,52 @@ class PGServer:
         """Get status for an instance."""
         if self.running:
             print('%s (%d) is running with %d child processes' % (
-                    self.name,
-                    self.process.pid,
-                    len(self.process.children())))
+                self.name, self.process.pid, len(self.process.children())
+            ))
         else:
             print('%s is not running' % self.name)
 
     def restart(self):
         """Restart an instance."""
-        log.info('restarting %s' % self.name)
-        self.stop()
-        self.start()
+        self._pg_ctl('restart')
+
+    def reload(self):
+        """Reload the configuration file for an instance."""
+        self._pg_ctl('reload')
+
+    def promote(self):
+        """Promote an instance out of replication mode and allow writing."""
+        self._pg_ctl('promote')
+
+    def _pg_ctl(self, operation, *args, **kwargs):
+        """Issue pg_ctl commands for a given operation and command line options.
+
+        Argument args should be used for positionals like -W, and kwargs will
+        be built in named values like --log="/var/log/blah".
+
+        This always sets -D (--pgdata) so no need to pass that. Returns the
+        process ID.
+        """
+        cmd = [
+            os.path.join(self.cfg['pgbinaries'], 'bin', 'pg_ctl'),
+            operation,
+            '--pgdata=%s' % self.cfg['pgdata'],
+        ]
+        cmd.extend(args)
+
+        for arg, val in kwargs.items():
+            cmd.append('--%s="%s"' % (arg, val))
+
+        pglib = os.path.join(self.cfg['pgbinaries'], 'lib')
+        ldlib = os.environ['LD_LIBRARY_PATH']
+
+        if pglib not in ldlib:
+            log.debug('prepending %s to LD_LIBRARY_PATH for %s' % (pglib, self.name))
+            os.environ['LD_LIBRARY_PATH'] = '%s:%s' % (pglib, ldlib)
+
+        log.info('issuing %s for instance %s' % (operation, self.name))
+        log.debug('args are: %s' % str(cmd))
+        return psutil.Popen(cmd)
 
 
 class PIDFile:

@@ -11,3 +11,8 @@ class InputFileError(BaseError):
 class InvalidServerError(BaseError):
     """Raised when a bad server identifier is given."""
     pass
+
+
+class ServerStopError(BaseError):
+    """Raised when a server does not stop."""
+    pass
