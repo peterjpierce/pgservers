@@ -4,7 +4,6 @@ custom_args:
 
   - args: ['operation']
     kwargs:
-      nargs: 1
       metavar: operation
       choices:
         - start

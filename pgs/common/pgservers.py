@@ -67,10 +67,8 @@ class PGServer:
 
     @property
     def running(self):
-        if self.process and psutil.pid_exists(self.process.pid):
-            return True
-        else:
-            return False
+        """Psutil seems to cache, so cannot trust psutil.pid_exists()."""
+        return bool(self.process and self.pidfile.exists)
 
     def start(self):
         """Start an instance."""
@@ -78,8 +76,7 @@ class PGServer:
             log.info('%s is already running' % self.name)
 
         else:
-            named_args = {x: self.cfg[x] for x in ['pgdata', 'log']}
-            self.process = self._pg_ctl('start', **named_args)
+            self.process = self._pg_ctl('start', log=self.cfg['log'])
 
             if not self.running:
                 log.error('server %s did not start' % self.name)
@@ -173,6 +170,10 @@ class PIDFile:
         return os.path.basename(self.path)
 
     @property
+    def exists(self):
+        return os.path.exists(self.path)
+
+    @property
     def pid(self):
         value = self._read_pidfile()
         if value:
@@ -189,6 +190,6 @@ class PIDFile:
             return None
         try:
             with open(self.path, 'r') as f:
-                return int(f.read())
+                return int(f.readline().strip())
         except IOError:
             raise
