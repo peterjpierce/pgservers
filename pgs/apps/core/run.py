@@ -23,11 +23,12 @@ def run():
         print('\n'.join(servers.instance_names))
 
     else:
-
         for instance in sorted(instances):
             server = servers.get_instance(instance)
 
-            log.info('performing %s for %s' % (args.operation, server.name))
+            if args.operation != 'status':
+                log.info('performing %s for %s' % (args.operation, server.name))
+
             method = getattr(server, args.operation)
             method()
 

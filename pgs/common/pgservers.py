@@ -1,15 +1,11 @@
 import logging
 import os
-import time
 
 import psutil
 
 from pgs.common import errors
 
 log = logging.getLogger(__name__)
-
-PAUSE_SECONDS = 5
-MAX_TRIES = 10
 
 
 class Servers:
@@ -73,39 +69,17 @@ class PGServer:
     def start(self):
         """Start an instance."""
         if self.running:
-            log.info('%s is already running' % self.name)
-
+            log.warn('%s is already running' % self.name)
         else:
             self.process = self._pg_ctl('start', log=self.cfg['log'])
-
-            if not self.running:
-                log.error('server %s did not start' % self.name)
-
         return self.running
 
     def stop(self):
         """Stop an instance."""
         if self.running:
-            count = 0
-            identifier = '%s (%d)' % (self.name, self.process.pid)
-
-            while count < MAX_TRIES and self.running:
-                msg = '%s not stopped yet, retrying' if count else 'stopping %s'
-                log.info(msg % identifier)
-                self.process = self._pg_ctl('stop')
-                time.sleep(PAUSE_SECONDS)
-                count += 1
-
-            if self.running:
-                err = 'server %s did not stop' % identifier
-                log.error(err)
-                raise errors.ServerStopError(err)
-            else:
-                log.info('%s has stopped' % identifier)
-                self.process = None
-
+            self.process = self._pg_ctl('stop')
         else:
-            log.info('%s is already stopped' % self.name)
+            log.warn('%s is already stopped' % self.name)
 
     def status(self):
         """Get status for an instance."""
@@ -134,12 +108,13 @@ class PGServer:
         Argument args should be used for positionals like -W, and kwargs will
         be built in named values like --log="/var/log/blah".
 
-        This always sets -D (--pgdata) so no need to pass that. Returns the
-        process ID.
+        This always sets -D (--pgdata) so no need to pass that, and --silent.
+        Returns the process ID.
         """
         cmd = [
             os.path.join(self.cfg['pgbinaries'], 'bin', 'pg_ctl'),
             operation,
+            '--silent',
             '--pgdata=%s' % self.cfg['pgdata'],
         ]
         cmd.extend(args)
@@ -154,7 +129,7 @@ class PGServer:
             log.debug('prepending %s to LD_LIBRARY_PATH for %s' % (pglib, self.name))
             os.environ['LD_LIBRARY_PATH'] = '%s:%s' % (pglib, ldlib)
 
-        log.info('issuing %s for instance %s' % (operation, self.name))
+        log.debug('issuing %s for instance %s' % (operation, self.name))
         log.debug('args are: %s' % str(cmd))
         return psutil.Popen(cmd)
 

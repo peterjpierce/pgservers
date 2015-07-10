@@ -5,6 +5,9 @@ LOGGING_CONFIG = {
         'basic': {
             'format': '%(asctime)s [%(process)5d] (%(name)s) %(levelname)s - %(message)s',
         },
+        'sparse': {
+            'format': '%(message)s',
+        },
     },
     'handlers': {
         'logfile': {
@@ -18,7 +21,7 @@ LOGGING_CONFIG = {
         'console': {
             'class': 'logging.StreamHandler',
             'level': 'DEBUG',
-            'formatter': 'basic',
+            'formatter': 'sparse',
             'stream': 'ext://sys.stdout',
         },
     },
