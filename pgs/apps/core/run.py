@@ -22,13 +22,20 @@ def run():
     elif args.operation == 'list':
         print('\n'.join(servers.instance_names))
 
+    elif args.operation == 'status':
+        if not instances:
+            instances = instance_map.keys()
+
+        for instance in sorted(instances):
+            servers.get_instance(instance).status()
+
     else:
+        if not instances:
+            print('provide instance(s)')
+
         for instance in sorted(instances):
             server = servers.get_instance(instance)
-
-            if args.operation != 'status':
-                log.info('performing %s for %s' % (args.operation, server.name))
-
+            log.info('performing %s for %s' % (args.operation, server.name))
             method = getattr(server, args.operation)
             method()
 

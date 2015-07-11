@@ -58,26 +58,33 @@ class PGServer:
         """Arg instance is the unique instance identifier."""
         self.cfg = configuration_directives
         self.name = instance_identifier
-        self.pidfile = PIDFile(self.cfg['pgdata'])
-        self.process = psutil.Process(self.pidfile.pid) if self.pidfile.pid else None
+
+    @property
+    def pidfile(self):
+        """Dynamically refresh PID file state with each invocation."""
+        return PIDFile(self.cfg['pgdata'])
+
+    @property
+    def process(self):
+        """get a fresh Process corresponding to the latest PID file, if any."""
+        return psutil.Process(self.pidfile.pid) if self.pidfile.pid else None
 
     @property
     def running(self):
-        """Psutil seems to cache, so cannot trust psutil.pid_exists()."""
-        return bool(self.process and self.pidfile.exists)
+        """Determine status of current process, based on postmaster.pid."""
+        return bool(self.pidfile.pid and self.process.is_running())
 
     def start(self):
         """Start an instance."""
         if self.running:
             log.warn('%s is already running' % self.name)
         else:
-            self.process = self._pg_ctl('start', log=self.cfg['log'])
-        return self.running
+            self._pg_ctl('start', log=self.cfg['log'])
 
     def stop(self):
         """Stop an instance."""
         if self.running:
-            self.process = self._pg_ctl('stop')
+            self._pg_ctl('stop')
         else:
             log.warn('%s is already stopped' % self.name)
 
@@ -92,7 +99,11 @@ class PGServer:
 
     def restart(self):
         """Restart an instance."""
-        self._pg_ctl('restart')
+        if self.running:
+            self._pg_ctl('restart', log=self.cfg['log'])
+        else:
+            log.warn('%s is not running, just issuing start' % self.name)
+            self.start()
 
     def reload(self):
         """Reload the configuration file for an instance."""
