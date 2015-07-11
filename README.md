@@ -56,17 +56,15 @@ pg1:
 
 Where:
 
- | variable | requires |
- | -------- | -------- |
- | `pg1       ` | server instance name |
- | `pgdata    ` | database directory |
- | `pgbinaries` | base directory for this instance's server binaries |
- | `log       ` | full path the desired PostgreSQL server log |
+| Key          | Value |
+| ------------ | -------- |
+| `pg1       ` | server instance name |
+| `pgdata    ` | database directory |
+| `pgbinaries` | base directory for this instance's server binaries |
+| `log       ` | full path the desired PostgreSQL server log |
  
 
-The minimal configuration requires just these three settings per Gunicorn server.  (Note that by installing gunicorn in your app's virtual env, your gunicorn_binary setting can be used to infer and activate the correct environment). For now, please use three-digit instance numbers.
-
-## Running Stampede
+## Running pgservers
 
 File `bin/pgs` is the script to run (from within your virtualenv).
 Use --help to see its instructions:
@@ -84,7 +82,6 @@ optional arguments:
   -h, --help     show this help message and exit
   -v, --verbose  show debug logging on console
   -q, --quiet    suppress non-error logging on console
-
 ```
 
 You may use the word `all` as an instance argument to task every instance at once.
