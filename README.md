@@ -54,15 +54,17 @@ pg1:
 
 ```
 
-Where:
+Where the values mean:
 
 | Key          | Value |
 | ------------ | -------- |
 | `pg1       ` | server instance name |
 | `pgdata    ` | database directory |
+| `pgport    ` | port this instance listens on, must match `$PGDATA/postgresql.conf` |
 | `pgbinaries` | base directory for this instance's server binaries |
-| `log       ` | full path the desired PostgreSQL server log |
+| `log       ` | full path to the desired PostgreSQL server log |
  
+You should not have to edit `etc/config.py` or `etc/log.py`.
 
 ## Running pgservers
 
@@ -83,6 +85,16 @@ optional arguments:
   -v, --verbose  show debug logging on console
   -q, --quiet    suppress non-error logging on console
 ```
+
+Supported operations include:
+
++ start
++ stop
++ status
++ restart
++ reload
++ promote
++ list
 
 You may use the word `all` as an instance argument to task every instance at once.
 
