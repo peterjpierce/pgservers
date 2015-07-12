@@ -1,8 +1,7 @@
 from argparse import ArgumentParser
 import logging
 import logging.config
-from os.path import basename, join
-import sys
+from os.path import join
 
 from etc import config, log
 from pgs.common import errors, readers, util
@@ -15,15 +14,13 @@ class ArgsWrapper():
 
     def __init__(self, arg_definitions=[]):
         self.arg_definitions = arg_definitions
-        tool = sys.argv.pop(1)
-        invoked = '%s %s' % (basename(sys.argv[0]), tool)
 
         try:
             description = arg_definitions['description']
         except KeyError:
             description = DEFAULT_DESCRIPTION
 
-        self.parser = ArgumentParser(prog=invoked, description=description)
+        self.parser = ArgumentParser(description=description)
         self._build()
 
     def parse(self):
