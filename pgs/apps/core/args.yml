@@ -12,11 +12,10 @@ custom_args:
         - restart
         - reload
         - promote
-        - list
-      help: 'one of: start|stop|restart|reload|promote|status|list'
+      help: 'one of: start|stop|restart|reload|promote|status'
 
   - args: ['instances']
     kwargs:
       nargs: '*'
       metavar: instances
-      help: 'instance list, or "all" (not needed for status|list)'
+      help: 'instance list, or "all" (optional for status)'

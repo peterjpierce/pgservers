@@ -8,7 +8,7 @@ import sys
 sys.path.insert(0, abspath(join(dirname(__file__), '..')))
 
 TOOLSETS = {
-    'core': ['start', 'stop', 'status', 'restart', 'reload', 'promote', 'list'],
+    'core': ['start', 'stop', 'status', 'restart', 'reload', 'promote'],
     'backup': ['backup'],
 }
 

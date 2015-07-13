@@ -1,18 +1,17 @@
 # pgservers
 
-A framework for running many PostgreSQL servers, which provides:
+A framework for operating PostgreSQL servers, which provides:
 
-+ Unified way to run one or many [PostgreSQL](http://www.postgresql.org) instances concurrently
-+ Tools to run any number of PostgreSQL version levels and binary trees simultaneously
++ A unified way to run one or many [PostgreSQL](http://www.postgresql.org) instances concurrently
++ Flexibility to simultaneously use any number of PostgreSQL versions
 + Succinct commands, consistent operations
-+ Ability to start/stop/restart/reload/promote/status one, multiple or all servers at once
++ The ability to start/stop/restart/reload/promote/status one, multiple or all servers at once
 + Simple configuration
-+ Logging
++ Logging for history and troubleshooting
 
 ## Installation
 
-Pgservers has been tested on Linux and OS X.  It requires Python and two common libraries:
-PyYAML and psutil.
+**pgservers** has been tested on Linux and OS X.  It requires Python and some common libraries.
 
 ### Step 0: PostgreSQL instances and databases
 
@@ -49,8 +48,12 @@ An example is provided, that looks like this:
 pg1:
   pgdata: /var/local/data/pg/pg1
   pgport: 5512
-  pgbinaries: /opt/pg/servers/9.3.5
+  binaries: /opt/pg/servers/9.3.5
   log: /var/log/pg/pg1.log
+  dba_connection:
+    host: localhost
+    username: postgres
+    password: xxyyZZ3!
 
 ```
 
@@ -61,8 +64,9 @@ Where the values mean:
 | `pg1       ` | server instance name |
 | `pgdata    ` | database directory |
 | `pgport    ` | port this instance listens on, must match `$PGDATA/postgresql.conf` |
-| `pgbinaries` | base directory for this instance's server binaries |
+| `binaries` | base directory for this instance's server binaries |
 | `log       ` | full path to the desired PostgreSQL server log |
+| `dba_connection` | database superuser login credentials |
  
 You should not have to edit `etc/config.py` or `etc/log.py`.
 
@@ -74,31 +78,32 @@ Use --help to see its instructions:
 ```
 usage: pgs [-h] [-v] [-q] operation [instances [instances ...]]
 
-Perform start/stop/etc. operations for PostgreSQL servers
+Perform start/stop/status/etc. operations for PostgreSQL servers
 
 positional arguments:
-  operation      issue pg_ctl command
-  instances      instances for operate on, or "all"
+  operation      one of: start|stop|restart|reload|promote|status
+  instances      instance list, or "all" (optional for status)
 
 optional arguments:
   -h, --help     show this help message and exit
   -v, --verbose  show debug logging on console
   -q, --quiet    suppress non-error logging on console
+
 ```
 
 Supported operations include:
 
 + start
 + stop
-+ status
 + restart
 + reload
 + promote
-+ list
++ status
 
-You may use the word `all` as an instance argument to task every instance at once.
+You may use the word `all` as an instance argument to task every instance at once
+(`status` does not require an instance arg).
 
-Pgserver's log is located in the `var/log/` subdirectory.
+The log for **pgservers** is located in its `var/log/` subdirectory.
 
 ## Feedback
 Please ask any questions, report problems, and provide feedback to:  peterjpierce@gmail.com

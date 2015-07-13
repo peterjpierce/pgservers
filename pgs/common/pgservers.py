@@ -3,7 +3,8 @@ import os
 
 import psutil
 
-from pgs.common import errors
+from pgs.common import errors, sql
+from pgs.db import database
 
 log = logging.getLogger(__name__)
 
@@ -58,6 +59,7 @@ class PGServer:
         """Arg instance is the unique instance identifier."""
         self.cfg = configuration_directives
         self.name = instance_identifier
+        self._databases = []
 
     @property
     def pidfile(self):
@@ -73,6 +75,32 @@ class PGServer:
     def running(self):
         """Determine status of current process, based on postmaster.pid."""
         return bool(self.pidfile.pid and self.process.is_running())
+
+    @property
+    def database_names(self):
+        """Get a list of database names in this cluster (instance)."""
+        return [d.db_name for d in self.databases]
+
+    @property
+    def databases(self):
+        """Get a list of Record for databases created in this cluster.
+
+        See sql.py for attribute names. Caches results for subsequent calls.
+        """
+        if self._databases:
+            pass
+
+        elif self.running:
+            creds = self.cfg['dba_connection']
+            db = database.Database('postgresql+psycopg2://%s:%s@%s:%s/postgres' % (
+                creds['username'], creds['password'], creds['host'], str(self.cfg['pgport'])
+            ))
+            self._databases = db.query(sql.VIABLE_DATABASES, logsql=False)
+
+        else:
+            log.debug('%s is not running, cannot list databases' % self.name)
+
+        return self._databases
 
     def start(self):
         """Start an instance."""
@@ -123,7 +151,7 @@ class PGServer:
         Returns the process ID.
         """
         cmd = [
-            os.path.join(self.cfg['pgbinaries'], 'bin', 'pg_ctl'),
+            os.path.join(self.cfg['binaries'], 'bin', 'pg_ctl'),
             operation,
             '--silent',
             '--pgdata=%s' % self.cfg['pgdata'],
@@ -133,7 +161,7 @@ class PGServer:
         for arg, val in kwargs.items():
             cmd.append('--%s="%s"' % (arg, val))
 
-        pglib = os.path.join(self.cfg['pgbinaries'], 'lib')
+        pglib = os.path.join(self.cfg['binaries'], 'lib')
         ldlib = os.environ['LD_LIBRARY_PATH']
 
         if pglib not in ldlib:

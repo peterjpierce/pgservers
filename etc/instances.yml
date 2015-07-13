@@ -2,11 +2,19 @@
 pg1:
   pgdata: /opt/pg/var/db/pg1
   pgport: 5512
-  pgbinaries: /opt/pg/servers/9.3.5
+  binaries: /opt/pg/servers/9.3.5
   log: /var/log/pg/pg1.log
+  dba_connection:
+    host: localhost
+    username: peter
+    password: xxyyZZ
 
 pg1a:
   pgdata: /var/local/data/pg/pg1
   pgport: 5432
-  pgbinaries: /opt/pg/servers/9.3.5
+  binaries: /opt/pg/servers/9.3.5
   log: /var/log/pg/pg1a.log
+  dba_connection:
+    host: localhost
+    username: peter
+    password: xxyyZZ

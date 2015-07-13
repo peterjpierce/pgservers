@@ -16,3 +16,8 @@ class InvalidServerError(BaseError):
 class ServerStopError(BaseError):
     """Raised when a server does not stop."""
     pass
+
+
+class DatabaseError(BaseError):
+    """Raised when a database error is encountered."""
+    pass

@@ -6,6 +6,29 @@ from pgs.common import context, pgservers
 TOOLNAME = basename(dirname(__file__))
 
 
+def print_status_table(server_list):
+    """Output a formatted status table."""
+    fmt = '%-10s  %4s  %-5s  %5s  %7s  %s'
+    headings = ('instance', 'port', 'state', 'PID', 'threads', 'databases')
+    print('%s\n%s' % (fmt % headings, '-' * 60))
+
+    for server in server_list:
+
+        if server.running:
+            state, pid, thread_count = 'up', server.pidfile.pid, 1 + len(server.process.children())
+        else:
+            state, pid, thread_count = 'down', '', ''
+
+        print(fmt % (
+            server.name,
+            str(server.cfg['pgport']),
+            state,
+            str(pid),
+            str(thread_count),
+            ', '.join(server.database_names)
+        ))
+
+
 def run():
 
     args, instance_map = context.setup(TOOLNAME)
@@ -19,15 +42,9 @@ def run():
     if invalid_instances:
         log.error('invalid instance(s): %s' % str(invalid_instances))
 
-    elif args.operation == 'list':
-        print('\n'.join(servers.instance_names))
-
     elif args.operation == 'status':
-        if not instances:
-            instances = instance_map.keys()
-
-        for instance in sorted(instances):
-            servers.get_instance(instance).status()
+        show = [s for s in servers if s.name in instances] if instances else servers
+        print_status_table(show)
 
     else:
         if not instances:
